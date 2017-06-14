@@ -5,7 +5,10 @@
 
 --]]
 
+-- Vicious requires to be installed (Arch Linux: pacman -S vicious)
+local vicious = require("vicious")
 local gears = require("gears")
+local wallhelpers   = require("wallhelpers")
 local lain  = require("lain")
 local awful = require("awful")
 local wibox = require("wibox")
@@ -93,6 +96,8 @@ theme.titlebar_maximized_button_focus_active    = theme.confdir .. "/icons/title
 
 local markup = lain.util.markup
 
+-- {{{ Wibox
+
 -- Textclock
 os.setlocale(os.getenv("LANG")) -- to localize the clock
 local clockicon = wibox.widget.imagebox(theme.widget_clock)
@@ -111,8 +116,10 @@ theme.cal = lain.widget.cal({
 
 -- Weather
 local weathericon = wibox.widget.imagebox(theme.widget_weather)
+-- Dublin: http://openweathermap.org/city/2964574
+-- Catanzaro: http://openweathermap.org/city/2525059
 theme.weather = lain.widget.weather({
-    city_id = 2643743, -- placeholder (London)
+    city_id = 2525059,
     notification_preset = { font = "xos4 Terminus 10", fg = theme.fg_normal },
     weather_na_markup = markup.fontfg(theme.font, "#eca4c4", "N/A "),
     settings = function()
@@ -188,6 +195,15 @@ local bat = lain.widget.bat({
 
 -- ALSA volume
 local volicon = wibox.widget.imagebox(theme.widget_vol)
+volicon:buttons(awful.util.table.join(
+    awful.button({ }, 1,
+        function ()
+            -- Ensure to have only one pavucontrol
+            awful.util.spawn("killall pavucontrol")
+            awful.util.spawn("pavucontrol")
+        end
+    )
+))
 theme.volume = lain.widget.alsa({
     settings = function()
         if volume_now.status == "off" then
@@ -251,19 +267,44 @@ theme.mpd = lain.widget.mpd({
     end
 })
 
+-- Spacer
+spacer = wibox.widget.textbox(" ")
+
+-- CPU Graph
+cpugraphwidget = awful.widget.graph()
+cpugraphwidget:set_width(40)
+cpugraphwidget:set_background_color("#494B4F")
+cpugraphwidget:set_color("#FF5656")
+vicious.register(cpugraphwidget, vicious.widgets.cpu, "$2", 3)
+
+-- Redshift widget
+local rs_on = os.getenv("HOME") .. "/.config/awesome/icons/redshift/redshift_on.png"
+local rs_off = os.getenv("HOME") .. "/.config/awesome/icons/redshift/redshift_off.png"
+
+myredshift = wibox.widget.imagebox(rs_on)
+lain.widget.contrib.redshift:attach(
+    myredshift,
+    function ()
+        -- The following no longer work because latest redshift
+        -- module does not have is_active() anymore
+        --if lain.widget.contrib.redshift:is_active() then
+            --myredshift:set_image(rs_on)
+        --else
+            --myredshift:set_image(rs_off)
+        --end
+    end
+)
+-- }}}
+
 function theme.at_screen_connect(s)
     -- Quake application
     s.quake = lain.util.quake({ app = awful.util.terminal })
 
     -- If wallpaper is a function, call it with the screen
-    local wallpaper = theme.wallpaper
-    if type(wallpaper) == "function" then
-        wallpaper = wallpaper(s)
-    end
-    gears.wallpaper.maximized(wallpaper, s, true)
+    wallhelpers.set_random_wallpaper(s)
 
     -- Tags
-    awful.tag(awful.util.tagnames, s, awful.layout.layouts)
+    awful.tag(awful.util.tagnames, s, awful.layout.layouts[1])
 
     -- Create a promptbox for each screen
     s.mypromptbox = awful.widget.prompt()
@@ -292,15 +333,17 @@ function theme.at_screen_connect(s)
             layout = wibox.layout.fixed.horizontal,
             --s.mylayoutbox,
             s.mytaglist,
+            cpugraphwidget,
             s.mypromptbox,
             mpdicon,
             theme.mpd.widget,
         },
-        --s.mytasklist, -- Middle widget
-        nil,
+        s.mytasklist, -- Middle widget
+        --nil,
         { -- Right widgets
             layout = wibox.layout.fixed.horizontal,
             wibox.widget.systray(),
+            myredshift,
             --mailicon,
             --theme.mail.widget,
             netdownicon,
@@ -316,6 +359,7 @@ function theme.at_screen_connect(s)
             --fsicon,
             --theme.fs.widget,
             weathericon,
+            -- theme.weather.icon, oter icon
             theme.weather.widget,
             tempicon,
             temp.widget,
@@ -323,9 +367,11 @@ function theme.at_screen_connect(s)
             bat.widget,
             clockicon,
             mytextclock,
+            s.mylayoutbox,
         },
     }
 
+--[[ Disabled the bottomwibox
     -- Create the bottom wibox
     s.mybottomwibox = awful.wibar({ position = "bottom", screen = s, border_width = 0, height = dpi(20), bg = theme.bg_normal, fg = theme.fg_normal })
 
@@ -341,6 +387,7 @@ function theme.at_screen_connect(s)
             s.mylayoutbox,
         },
     }
+--]]
 end
 
 return theme
