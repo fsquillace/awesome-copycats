@@ -284,14 +284,12 @@ local rs_off = os.getenv("HOME") .. "/.config/awesome/icons/redshift/redshift_of
 myredshift = wibox.widget.imagebox(rs_on)
 lain.widget.contrib.redshift:attach(
     myredshift,
-    function ()
-        -- The following no longer work because latest redshift
-        -- module does not have is_active() anymore
-        --if lain.widget.contrib.redshift:is_active() then
-            --myredshift:set_image(rs_on)
-        --else
-            --myredshift:set_image(rs_off)
-        --end
+    function (active)
+        if active then
+            myredshift:set_image(rs_on)
+        else
+            myredshift:set_image(rs_off)
+        end
     end
 )
 -- }}}
