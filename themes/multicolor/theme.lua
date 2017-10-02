@@ -118,8 +118,9 @@ theme.cal = lain.widget.cal({
 local weathericon = wibox.widget.imagebox(theme.widget_weather)
 -- Dublin: http://openweathermap.org/city/2964574
 -- Catanzaro: http://openweathermap.org/city/2525059
+-- Sydney: http://openweathermap.org/city/2147714
 theme.weather = lain.widget.weather({
-    city_id = 2525059,
+    city_id = 2147714,
     notification_preset = { font = "xos4 Terminus 10", fg = theme.fg_normal },
     weather_na_markup = markup.fontfg(theme.font, "#eca4c4", "N/A "),
     settings = function()
