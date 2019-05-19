@@ -293,7 +293,7 @@ globalkeys = my_table.join(
         end,
         {description = "focus next by index", group = "client"}
     ),
-    awful.key({ altkey, altkey           }, "k",
+    awful.key({ modkey, altkey           }, "k",
         function ()
             awful.client.focus.byidx(-1)
         end,
